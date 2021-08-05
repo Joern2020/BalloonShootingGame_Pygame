@@ -290,11 +290,8 @@ pygame.init()
 clock = pygame.time.Clock()
 
 # load sounds and define channels
-
 announce_sound = mixer.Sound('res/audio/announce.mp3')
-
 hit_sound = mixer.Sound('res/audio/Hit.ogg')
-
 shoot_sound = mixer.Sound('res/audio/LaserGun.ogg')
 no_ammo_sound = mixer.Sound('res/audio/NoAmmo.ogg')
 reload_sound = mixer.Sound('res/audio/GunCocking.ogg')
