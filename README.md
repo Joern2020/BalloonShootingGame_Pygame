@@ -1,4 +1,4 @@
-# ShootingGame_Pygame
+# BalloonShootingGame_Pygame
  This is my first game programming based on pygame.
  
  The game is about shooting balloons in a scrolling scene, which mimics the old game "Moorhuhn". 
