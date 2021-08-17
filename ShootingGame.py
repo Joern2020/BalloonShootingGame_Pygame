@@ -6,14 +6,14 @@ from pygame.math import Vector2
 
 
 class ScoringAnimation(pygame.sprite.Sprite):
-    def __init__(self, position, offset_Y, color_index, scoring_amplifier, delta_t):
+    def __init__(self, position, offset_y, color_index, scoring_amplifier, delta_time):
         super().__init__()
-        self.image = Score_font.render(f'+{scoring_amplifier}', True, pygame.Color(ColorList[color_index]))
+        self.image = Board_font.render(f'+{scoring_amplifier}', True, pygame.Color(ColorList[color_index]))
         self.rect = self.image.get_rect()
-        self.initialY = position[1]-offset_Y
+        self.initialY = position[1] - offset_y
         self.rect.center = self.position = Vector2(position[0], self.initialY)
         self.velocity = Vector2(0, -0.2)
-        self.d_t = delta_t
+        self.d_t = delta_time
 
     def update(self):
         self.position += self.velocity * self.d_t
@@ -24,32 +24,32 @@ class ScoringAnimation(pygame.sprite.Sprite):
 
 
 class Target(pygame.sprite.Sprite):  # define a Target(Balloon) class
-    def __init__(self, randnum, position, velocity, scale, delta_t):
+    def __init__(self, random_number, position, velocity, scale, delta_time):
         super().__init__()
-        img_idle_list = Balloon_idle_Set[randnum]
-        img_quit_list = Balloon_quit_Set[randnum]
+        img_idle_list = Balloon_idle_Set[random_number]
+        img_quit_list = Balloon_quit_Set[random_number]
         img_width, img_height = img_idle_list[0].get_rect().size
         img_width = int(img_width * scale)
         img_height = int(img_height * scale)  # scale the image width and height
-        self.ColorIndex = randnum
+        self.ColorIndex = random_number
         self.ImgIdle_list_scaled = []
         self.ImgQuit_list_scaled = []
 
         # scale all the images in the lists
         for list_num in range(len(img_idle_list)):
-            Tmp_img = img_idle_list[list_num]
-            Tmp_img = pygame.transform.smoothscale(Tmp_img, (img_width, img_height))
-            self.ImgIdle_list_scaled.append(Tmp_img)
+            tmp_image = img_idle_list[list_num]
+            tmp_image = pygame.transform.smoothscale(tmp_image, (img_width, img_height))
+            self.ImgIdle_list_scaled.append(tmp_image)
         for list_num in range(len(img_quit_list)):
-            Tmp_img = img_quit_list[list_num]
-            Tmp_img = pygame.transform.smoothscale(Tmp_img, (img_width, img_height))
-            self.ImgQuit_list_scaled.append(Tmp_img)
+            tmp_image = img_quit_list[list_num]
+            tmp_image = pygame.transform.smoothscale(tmp_image, (img_width, img_height))
+            self.ImgQuit_list_scaled.append(tmp_image)
 
         self.image = self.ImgIdle_list_scaled[0]
         self.rect = self.image.get_rect()
         self.rect.center = self.position = Vector2(position)
         self.velocity = Vector2(velocity)
-        self.d_t = delta_t
+        self.d_t = delta_time
         self.mask = pygame.mask.from_surface(self.image)  # Creates a Mask from the given surface
         self.quit_trigger = False
         self.time_counter = 0
@@ -66,7 +66,7 @@ class Target(pygame.sprite.Sprite):  # define a Target(Balloon) class
         self.position += env_movement  # add the scrolled movement to the position
         self.rect.center = self.position
 
-        if self.rect.center[1] < -50:
+        if self.rect.bottom <= 0:
             self.kill()  # sprite is removed if it is out of the top screen
 
     def set_quit_trigger(self):
@@ -108,16 +108,16 @@ class Target(pygame.sprite.Sprite):  # define a Target(Balloon) class
 
 
 class BulletIcon(pygame.sprite.Sprite):  # define a BulletIcon class
-    def __init__(self, position, delta_t, Img_List):
+    def __init__(self, position, delta_time, img_list):
         super().__init__()
-        self.img_list = Img_List
+        self.img_list = img_list
 
         self.image = self.img_list[0]
         self.rect = self.image.get_rect()
         self.rect.center = self.position = Vector2(position)
-        self.velocity = Vector2(random.random()*0.5+0.1, random.random()*-1-0.3)
+        self.velocity = Vector2(random.uniform(0.1, 0.6), random.uniform(-1.3, -0.3))
         self.acceleration = Vector2(0, 0.006)
-        self.delta_t = delta_t
+        self.delta_t = delta_time
         self.quit_trigger = False
         self.rotate_angle = 0
         self.delta_angle = 0
@@ -134,19 +134,36 @@ class BulletIcon(pygame.sprite.Sprite):  # define a BulletIcon class
         self.rect.center = self.position
         self.rotate_angle += self.delta_angle * self.delta_t
 
-        if self.rect.center[1] > screen_height + 20:  # sprite removed if out of the bottom screen
+        if self.rect.top >= screen_height:  # sprite removed if out of the bottom screen
             self.kill()
             self.quit_trigger = False
 
     def set_quit_trigger(self):
         self.quit_trigger = True
         self.rotate_angle = random.randint(-30, 30)
-        self.delta_angle = (random.random()*2-1) * 3
+        self.delta_angle = random.uniform(-3, 3)
         self.image = pygame.transform.rotozoom(self.img_list[1], self.rotate_angle, 1)
         self.rect = self.image.get_rect(center=self.rect.center)
 
     def is_quit_trigger(self):
         return self.quit_trigger
+
+
+class RenderText:
+    def __init__(self, font):
+        self.font = font
+        self.text = None
+        self.surface = None
+        self.color = None
+
+    def render(self, text, color):
+        if text == self.text and color == self.color:
+            return self.surface
+
+        self.text = text
+        self.color = color
+        self.surface = self.font.render(text, True, color)
+        return self.surface
 
 
 def add_target(group, env_x, scale, number, dt):  # add Target sprites into a group
@@ -166,8 +183,8 @@ def start_position_generation():  # initialize positions of the target sprites
 
 
 def start_velocity_generation(scale):  # initialize velocities of the target sprites
-    vel_x = random.random() * 0.3 - 0.15               # range (-0.15, 0.15)
-    vel_y = random.random() * -0.1 - 0.1 * scale    # range (-0.2, -0.1) * scale
+    vel_x = random.uniform(-0.15, 0.15)
+    vel_y = random.uniform(-0.2, -0.1) * scale
     velocity = Vector2(vel_x, vel_y)
     return velocity
 
@@ -177,12 +194,12 @@ def bullet_clear(group):  # empty bullets
     return False
 
 
-def bullet_reload(group, delta_time, Img_list):  # reload bullets
+def bullet_reload(group, delta_time, img_list):  # reload bullets
     group.empty()
     ammo_number = 10
     position = Vector2(screen_width - 20 * ammo_number, screen_height - 40)
     for bullet_count in range(ammo_number):
-        bullet_icon = BulletIcon(position, delta_time, Img_list)
+        bullet_icon = BulletIcon(position, delta_time, img_list)
         position.x += 20
         group.add(bullet_icon)
     # print("Ammo reloaded")
@@ -244,18 +261,19 @@ def check_shooting(group, score_amplifier, d_t):  # shooting checking function
 
 def update_fps():
     fps = str(int(clock.get_fps()))
-    fps_text = FPS_font.render(f'FPS: {fps}', True, pygame.Color(WHITE))
+    fps_text = FPS_font.render(f'FPS: {fps}', True, pygame.Color('white'))
     return fps_text
 
 
 def update_time(seconds):
     is_end = False
-    time_limit = 60
+    time_limit = 30
     countdown = int((time_limit - seconds) * 10) / 10  # 1 decimal remained
-    time_text = Score_font.render(f'TIME LEFT: {countdown} s', True, pygame.Color(WHITE))
+    time_text_renderer = RenderText(Board_font)
+    time_text = time_text_renderer.render(f'TIME LEFT: {countdown} s', pygame.Color('white'))
 
-    if countdown < 10 and (int(countdown) + 1) % 2 == 0: # flash effect on the text when <10s
-        time_text = Score_font.render(f'TIME LEFT: {countdown} s', True, pygame.Color(DARK_RED))
+    if countdown < 10 and (int(countdown) + 1) % 2 == 0:  # flash effect on the text when <10s
+        time_text = time_text_renderer.render(f'TIME LEFT: {countdown} s', pygame.Color(DARK_RED))
 
     if countdown <= 0:
         is_end = True
@@ -264,7 +282,8 @@ def update_time(seconds):
 
 
 def update_score():
-    score_text = Score_font.render(f'SCORE: {score}', True, pygame.Color(WHITE))
+    score_text_renderer = RenderText(Board_font)
+    score_text = score_text_renderer.render(f'SCORE: {score}', pygame.Color('white'))
     return score_text
 
 
@@ -359,22 +378,21 @@ for i in range(len(Balloon_idle_Set)):
     tmp_img = Balloon_idle_Set[i][0]
     pixel_position = (32, 1)  # get a particular pixel on the image
     ColorList.append(tmp_img.get_at(pixel_position))
-WHITE = (255, 255, 255)
 DARK_RED = (205, 70, 80)
 
 # define texts
 FPS_font = pygame.font.SysFont("Arial", 18)
-Score_font = pygame.font.SysFont("Showcard Gothic", 25)
+Board_font = pygame.font.SysFont("Showcard Gothic", 25)
 Info_font = pygame.font.SysFont("Showcard Gothic", 30)
 
-text_Ammo_Unavailable = Info_font.render(f'Out Of Ammo!!', True, pygame.Color(WHITE))
+text_Ammo_Unavailable = Info_font.render(f'Out Of Ammo!!', True, pygame.Color('white'))
 text_initial = Info_font.render(f'=== Click To Start ===', True, pygame.Color(DARK_RED))
-text_initial_control1 = Info_font.render(f'Left: A                 Right: D', True, pygame.Color(WHITE))
-text_initial_control2 = Info_font.render(f'Fire: L Click   Reload: R Click', True, pygame.Color(WHITE))
-text_ready = Info_font.render(f'Ready?', True, pygame.Color(WHITE))
+text_initial_control1 = Info_font.render(f'Left: A                 Right: D', True, pygame.Color('white'))
+text_initial_control2 = Info_font.render(f'Fire: L Click   Reload: R Click', True, pygame.Color('white'))
+text_ready = Info_font.render(f'Ready?', True, pygame.Color('white'))
 text_go = Info_font.render(f'GO!!', True, pygame.Color(DARK_RED))
 text_end = Info_font.render(f'=== Game Over ===', True, pygame.Color(DARK_RED))
-text_restart = Info_font.render(f'Press SPACE To Restart', True, pygame.Color(WHITE))
+text_restart = Info_font.render(f'Press SPACE To Restart', True, pygame.Color('white'))
 
 # define variables for scrolling effect
 x = -300
@@ -426,14 +444,16 @@ while True:
 
         if Loop_State == 0:
             if event.type == pygame.MOUSEBUTTONDOWN:
-                if event.button == 1:  # initialization for state 1 if clicked
+                # initialization for state 1 if clicked
+                if event.button == 1:
                     Prepare_trigger = True
                     ammo_available = bullet_reload(bullet_group, delta_t, Bullet_List)
                     channel1.play(announce_sound)
                     mixer.music.fadeout(4000)
 
         elif Loop_State == 1:
-            if event.type == MUSICSTOP:  # initialization for state 2 if sound stops
+            # initialization for state 2 if sound stops
+            if event.type == MUSICSTOP:
                 Prepare_trigger = False
                 StartPlay_trigger = True
                 Start_Time = pygame.time.get_ticks()
@@ -444,14 +464,14 @@ while True:
         elif Loop_State == 2:
             if event.type == pygame.MOUSEBUTTONDOWN:
                 if event.button == 1:  # left click return 1
-                    ammo_available = bullet_reduction(bullet_group) # L mouse clicking reduces bullets
+                    ammo_available = bullet_reduction(bullet_group)  # L mouse clicking reduces bullets
                     if ammo_available:  # check shooting
                         if not check_shooting(target_group1, 1, delta_t):
                             if not check_shooting(target_group2, 2, delta_t):
                                 if not check_shooting(target_group3, 5, delta_t):
                                     check_shooting(target_group4, 10, delta_t)
                 elif event.button == 3:  # right click return 3
-                    ammo_available = bullet_reload(bullet_group, delta_t,Bullet_List) # R mouse clicking reloads ammo
+                    ammo_available = bullet_reload(bullet_group, delta_t, Bullet_List)  # R mouse clicking reloads ammo
 
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_a:  # scrolling left
@@ -468,7 +488,8 @@ while True:
 
         elif Loop_State == 3:
             if event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_SPACE:  # initialization for state 0 if SPACE pressed
+                # initialization for state 0 if SPACE pressed
+                if event.key == pygame.K_SPACE:
                     EndPlay_trigger = False
                     x = -300
                     v = 0
@@ -479,14 +500,16 @@ while True:
                     ammo_available = bullet_clear(bullet_group)
                     sound_count = 0
 
+    ##################### game logic and render ######################
+    # Loop state
     Loop_State = require_state(Prepare_trigger, StartPlay_trigger, EndPlay_trigger)
 
+    # music volume adaption
     if channel2.get_busy() or channel3.get_busy():
         pygame.mixer.music.set_volume(0.3)
     else:
         pygame.mixer.music.set_volume(0.5)
 
-    ##################### game logic ######################
     # scrolling
     movement_step = v * delta_t
     x += movement_step
@@ -567,7 +590,8 @@ while True:
         Time_text, EndPlay_trigger = update_time((Current_Time - Start_Time) / 1000)
         screen.blit(Time_text, (screen_width - 220, 20))
 
-        if EndPlay_trigger and StartPlay_trigger:  # initialization for state 3
+        # initialization for state 3 if gameplay ends
+        if EndPlay_trigger and StartPlay_trigger:
             MoveLeft_Flag = False
             MoveRight_Flag = False
             StartPlay_trigger = False
