@@ -326,12 +326,12 @@ reload_sound = mixer.Sound('res/audio/GunCocking.ogg')
 
 MUSICSTOP = pygame.event.custom_type()  # define event
 
-channel1 = pygame.mixer.Channel(0)
+channel1 = mixer.Channel(0)
 channel1.set_volume(0.3)
 channel1.set_endevent(MUSICSTOP)  # define the event that's sent when a sound stops playing
-channel2 = pygame.mixer.Channel(1)
+channel2 = mixer.Channel(1)
 channel2.set_volume(0.5)
-channel3 = pygame.mixer.Channel(2)
+channel3 = mixer.Channel(2)
 
 # create screen
 screen_width = 800
@@ -413,7 +413,7 @@ ammo_available = False
 
 # music initialization
 mixer.music.load("res/audio/EndMusic.mp3")
-pygame.mixer.music.set_volume(0.5)
+mixer.music.set_volume(0.5)
 mixer.music.play(-1)
 
 # define triggers in game loop
@@ -458,7 +458,7 @@ while True:
                 StartPlay_trigger = True
                 Start_Time = pygame.time.get_ticks()
                 mixer.music.load("res/audio/PlayMusic.mp3")
-                pygame.mixer.music.set_volume(0.5)
+                mixer.music.set_volume(0.5)
                 mixer.music.play(-1)
 
         elif Loop_State == 2:
@@ -506,9 +506,9 @@ while True:
 
     # music volume adaption
     if channel2.get_busy() or channel3.get_busy():
-        pygame.mixer.music.set_volume(0.3)
+        mixer.music.set_volume(0.3)
     else:
-        pygame.mixer.music.set_volume(0.5)
+        mixer.music.set_volume(0.5)
 
     # scrolling
     movement_step = v * delta_t
@@ -601,7 +601,7 @@ while True:
             target_group3.empty()
             target_group4.empty()
             mixer.music.load("res/audio/EndMusic.mp3")
-            pygame.mixer.music.set_volume(0.5)
+            mixer.music.set_volume(0.5)
             mixer.music.play(-1)
             
     # blit elements in state 3
